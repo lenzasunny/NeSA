@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NeSA Website</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: url("BG.jpg") no-repeat center center fixed;
+      background-size: cover;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: rgba(93, 173, 226, 0.85);
+      backdrop-filter: blur(4px);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      font-weight: bold;
+      color: #000;
+      letter-spacing: 2px;
+      font-family: 'Arial Black', Gadget, sans-serif;
+    }
+    .logo img { height: 80px; margin-right: 15px; }
+
+    .logo-text { display: flex; flex-direction: column; line-height: 1.1; }
+    .logo-text .main { font-size: 3rem; }
+    .logo-text .subtitle {
+      font-size: 1rem; font-weight: normal; letter-spacing: normal;
+      font-family: Arial, sans-serif; margin-top: 2px;
+    }
+
+    nav a {
+      color: #000; text-decoration: none; margin-left: 2rem;
+      font-weight: bold; font-size: 1.2rem; transition: color 0.3s ease;
+    }
+    nav a:hover { color: #333; }
+
+    /* Section cards (dark transparent) — darker now */
+    section {
+      padding: 4rem 2rem;
+      background-color: rgba(0, 0, 0, 0.6); /* was 0.4 */
+      margin: 2rem auto;
+      width: 80%;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35);
+    }
+    section h2 {
+      text-align: center; font-size: 2rem; margin-bottom: 1rem; color: #fff;
+    }
+    section p {
+      text-align: center; font-size: 1.1rem; line-height: 1.6; color: #f1f1f1;
+    }
+
+    /* ---- Gallery Year Filter ---- */
+    .year-filter {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding: 0.5rem 0.5rem 1rem;
+      margin: 0 auto 1rem;
+      max-width: 900px;
+      scrollbar-width: thin;
+    }
+    .year-btn {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.25);
+      padding: 0.5rem 0.9rem;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      transition: background 0.2s ease, transform 0.1s ease, border-color 0.2s ease;
+      white-space: nowrap;
+    }
+    .year-btn:hover { background: rgba(255,255,255,0.25); transform: translateY(-1px); }
+    .year-btn.active {
+      background: #5dade2;
+      color: #000;
+      border-color: #5dade2;
+    }
+
+    /* ---- Gallery Carousel ---- */
+    .carousel {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+      background: rgba(0,0,0,0.35); /* was 0.2 */
+      user-select: none;
+      touch-action: pan-y;
+      display: none; /* hidden until a year with images is selected */
+    }
+    .carousel-track { position: relative; width: 100%; height: 100%; }
+    .carousel-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 300ms ease; }
+    .carousel-slide.active { opacity: 1; }
+    .carousel-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .carousel-btn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: rgba(0,0,0,0.55); /* a tad darker */
+      color: #fff; border: none;
+      width: 44px; height: 44px; border-radius: 999px; cursor: pointer;
+      display: grid; place-items: center; font-size: 1.2rem; line-height: 1;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+    .carousel-btn:hover { background: rgba(0,0,0,0.7); }
+    .carousel-btn:active { transform: translateY(-50%) scale(0.97); }
+    .carousel-btn.prev { left: 10px; }
+    .carousel-btn.next { right: 10px; }
+
+    .carousel-dots {
+      position: absolute; bottom: 10px; left: 50%;
+      transform: translateX(-50%); display: flex; gap: 8px;
+    }
+    .carousel-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: rgba(255,255,255,0.5); border: none; cursor: pointer;
+    }
+    .carousel-dot.active { background: #fff; }
+
+    .gallery-empty {
+      text-align: center;
+      color: #fff;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    /* ---- Timeline (left line) ---- */
+    .timeline {
+      position: relative;
+      margin: 2rem auto;
+      padding-left: 2rem;
+      max-width: 700px;
+    }
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 20px;
+      top: 0; bottom: 0;
+      width: 3px;
+      background: rgba(255, 255, 255, 0.6);
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 2rem;
+      padding-left: 2rem;
+    }
+    .timeline-year {
+      position: absolute;
+      left: -10px;
+      top: 0;
+      transform: translateX(-50%);
+      background: rgba(93, 173, 226, 0.9);
+      color: #000;
+      font-weight: bold;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 1rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+    .timeline-content {
+      background: rgba(0, 0, 0, 0.65); /* was 0.5 */
+      padding: 1rem;
+      border-radius: 10px;
+      margin-left: 2rem;
+      text-align: left;
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    }
+    .timeline-content h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.3rem;
+      color: #5dade2;
+    }
+
+    /* Awards bullet list */
+    .award-list {
+      margin: 0.5rem 0 1rem 1.25rem;
+      color: #f1f1f1;
+    }
+    .award-list li { margin: 0.3rem 0; }
+
+    /* Budget list — darker */
+    .budget-list {
+      list-style: none;
+      padding: 0;
+      margin: 0.75rem 0 0;
+    }
+    .budget-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.7rem 0.9rem;
+      margin: 0.5rem 0;
+      background: rgba(0, 0, 0, 0.7); /* was 0.6 */
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 10px;
+      backdrop-filter: blur(3px);
+      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+    .budget-list li::before {
+      content: "•";
+      color: #5dade2;
+      margin-right: 0.5rem;
+      font-weight: 900;
+    }
+    .budget-list .label { color: #ffffff; font-weight: 600; }
+    .budget-list .amount {
+      color: #FFD54A;
+      font-weight: 800;
+      font-size: 1.1rem;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+    .budget-list li:hover {
+      background: rgba(0, 0, 0, 0.85); /* was 0.75 */
+      border-color: rgba(255, 255, 255, 0.35);
+      transform: translateY(-1px);
+    }
+
+    /* Budget modal & trigger — darker */
+    .budget-image-icon {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 1rem;
+      color: #5dade2;
+      cursor: pointer;
+      background: rgba(0, 0, 0, 0.6); /* was 0.5 */
+      padding: 0.4rem 1rem;
+      display: inline-block;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      transition: background 0.2s ease;
+    }
+    .budget-image-icon:hover { background: rgba(0, 0, 0, 0.8); }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9); /* was 0.85 */
+      justify-content: center;
+      align-items: center;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+    .modal-content {
+      position: relative;
+      max-width: 80%;
+      background: rgba(0,0,0,0.9); /* was 0.85 */
+      padding: 1rem;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .modal-content img {
+      width: 100%;
+      max-width: 750px;
+      max-height: 60vh;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      object-fit: contain;
+    }
+    .close-btn {
+      position: absolute;
+      top: 10px; right: 20px;
+      font-size: 2rem; color: white; cursor: pointer;
+    }
+
+    /* ---------- Force YouTube link text to white ---------- */
+    .yt-link,
+    .yt-link:visited,
+    .yt-link:hover,
+    .yt-link:active {
+      color: #ffffff !important;
+      text-decoration: underline;
+      font-weight: 700;
+    }
+
+    @media (max-width: 768px) {
+      header { flex-direction: column; gap: 1rem; text-align: center; }
+      .logo img { height: 60px; }
+      .logo-text .main { font-size: 2.5rem; }
+      .logo-text .subtitle { font-size: 0.9rem; margin-top: 1px; }
+      nav a { margin: 0 1rem; }
+      section { width: 90%; padding: 3rem 1rem; }
+      .budget-list li { padding: 0.6rem 0.7rem; }
+      .modal-content { max-width: 95%; }
+    }
+
+    html { scroll-behavior: smooth; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <img src="Nesa_Logo.png" alt="NeSA Logo" />
+      <div class="logo-text">
+        <div class="main">NeSA</div>
+        <div class="subtitle">Nepalese Students in Ajou</div>
+      </div>
+    </div>
+    <nav>
+      <a href="#aboutus">About us</a>
+      <a href="#history">History</a>
+      <a href="#gallery">Gallery</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+
+  <!-- About Us Section -->
+  <section id="aboutus">
+    <h2>About Us</h2>
+    <p>
+NeSA (Nepalese Students in Ajou) is a non-profit community formed by Nepalese students at Ajou University. <br>
+Our mission is to welcome and support new students, organize cultural and social events, and promote the preservation of Nepali culture in Korea. <br>
+We also focus on protecting students by standing against scams, bullying, and sexual harassment, while offering counseling and emotional support when needed. <br>
+On the brighter side, we guide students toward career and job opportunities, provide academic assistance during challenging times, and create a warm and welcoming environment that genuinely feels like a home away from Nepal.
+    </p>
+  </section>
+
+  <!-- History Section -->
+  <section id="history">
+    <h2>Our History</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-year">2015</div>
+        <div class="timeline-content">
+          <h3>NeSA Established</h3>
+          <p>NeSA was founded in 2015 by Nepalese students at Ajou University under the vision of Dr. Bhojindra Tulachan, Dr. Kapil Gurung, Arun Gurung, Dr. Kamala KC and Dr. George Rai, to connect Nepalese students and build a supportive community.</p>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-year">2016</div>
+        <div class="timeline-content">
+          <h3>President: Dr. Bhojindra Tulachan</h3>
+             <p><strong>Vice President:</strong> Dr. Kapil Gurung, Kiran GC; <strong>Treasurer:</strong> Ganesh Paudel; <strong>Secretary:</strong> Dr. Kamala KC; <strong> Official Members:</strong> Nawaraj Basnet, Rabindra Acharya, Suraj Sharma, Purnima Thapa, Dr. Subash Marasini, Risab Dhakal, Srinkhala Magar</p>
+
+          <p>Organized the first large-scale cultural program and welcome event for new students.</p>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-year">2017</div>
+        <div class="timeline-content">
+          <h3>President: Dr. Kapil Gurung</h3>
+ <p><strong>Committee Members:</strong> Kiran GC, Dr. Sanju poudel, Dr. Narayan Bashyal, Bikash Thapa Magar, Bhesh Raj Guragai, Prithvi Rijal, Rishav Dhakal, Roshan Dahal. and Sirjana Lama</p>
+
+          <p>Organized the first large-scale cultural program and welcome event for new students.</p>
+
+        <ul class="budget-list">
+            <li><span class="label">Budget Left</span><span class="amount">₩650,000</span></li>
+          </ul>
+        </div>
+      </div>
+
+
+      <div class="timeline-item">
+        <div class="timeline-year">2018</div>
+        <div class="timeline-content">
+          <h3>President: Ganesh Paudel</h3>
+           <p><strong>Vice President:</strong> Himalaya Ban; <strong>Treasurer:</strong> Amrit Shrestha; <strong>Secretary:</strong> Siri Satyal; <strong>Official Members:</strong> Dr. Sushil Gaire, Ashis Lama, Megraj Pokhrel, Sunita Ryangmi Magar, Dr. Aavash Bhandari</p>
+          <ul class="award-list">
+            <li>
+              Team Nepal won 3st Prize in the Dance Competition at Ajou International Festival 2018.<br/>
+              Dance Performers: Ashika Koirala , Aanu Reezal
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-year">2019</div>
+        <div class="timeline-content">
+          <h3>President: Siri Satayal</h3>
+          <p><strong>Academic:</strong> Ratan Raj Paudel, Kumar Sapkota, Hysob Shrestha, Ajit Kuwar; <strong>Sports:</strong> Bhesh Raj Guragain, Krishan Parajuli, Santosh Limbu, Amrit Kumar Shrestha, Meg raj Pokhrel, Ganesh Thapa, Dr. Sushil Gaire, Ritesh Maharjan; <strong>Finance:</strong> Kiran GC, Ravindra Acharya; <strong>Event & Culture:</strong> Dr. Naryan Basyal, Dr. Aavash Bhandari; <strong>Information & SNS:</strong> Prithvi Rijal, Ganesh Paudel, Dr. Kapil Gurung, Sunita Ryangmi magar, Anjali Tamrakar</p>
+          <ul class="award-list">
+            <li>
+              Team Nepal won 1st Prize in the Dance Competition at Ajou International Festival 2019 with a traditional Magar Kauda performance.<br/>
+              Dance Performers: Dr. Sunny Thapa Magar, Sabu Tamang, Tilak Saru, Yanji Sherpa, Narendra Tamang, Sabina Magar
+              &nbsp;—&nbsp;
+              <a class="yt-link" href="https://youtu.be/blMy0jgZ02Y" target="_blank" rel="noopener noreferrer"><br>Watch on YouTube</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-year">2020</div>
+        <div class="timeline-content">
+          <h3>President: Kumar Sapkota</h3>
+          <ul class="award-list">
+            <li>
+              Team Nepal won 1st Prize in the Dance Competition at Ajou International Festival 2022, performing to the movie song “Dubo Phulyo”.<br/>
+              Dance Performers: Saraswati Tamang, Dr. Sunny Thapa Magar
+              &nbsp;—&nbsp;
+              <a class="yt-link" href="https://youtu.be/lqZQO0Vs-ok" target="_blank" rel="noopener noreferrer"><br>Watch on YouTube</a>
+            </li>
+          </ul>
+        <ul class="budget-list">
+            <li><span class="label">Budget Left</span><span class="amount">₩655,000</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-year">2023</div>
+        <div class="timeline-content">
+          <h3>President: Dr. Sunny Thapa Magar</h3>
+          <p><strong>Vice President:</strong> Sunita Ryangmi Magar; <strong>Treasurer:</strong> Dr. Aavash Bhandari; <strong>Secretary:</strong> Sajana Paudel Bhattarai; <strong>Official Members:</strong> Ashok Chhetri, Prakash Acharya</p>
+          <ul class="award-list">
+            <li>Team Nepal won 2nd Prize in the Dance Competition at Ajou International Festival 2023 with a traditional Tamang Selo performance.<br/>Dance Performers: Niru Tamang, Dr. Sunny Thapa Magar</li>
+                <li>NeSA Official Logo Created.</li>
+          </ul>
+          <ul class="budget-list">
+            <li><span class="label">Budget Received</span><span class="amount">₩655,000</span></li>
+            <li><span class="label">Total Earnings</span><span class="amount">₩6,660,600</span></li>
+            <li><span class="label">Total Expenditure</span><span class="amount">₩5,382,600</span></li>
+            <li><span class="label">Budget Left</span><span class="amount">₩1,278,000</span></li>
+          </ul>
+          <div class="budget-image-icon" onclick="openBudgetImage()">📷 View Transaction Report 2023 - 2025</div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-year">2025</div>
+        <div class="timeline-content">
+          <h3>President: Bibek Lama</h3>
+          <p><strong>Vice President:</strong> Katwal Jivan; <strong>Treasurer:</strong> Bibek Tiwari; <strong>Secretary:</strong> Pramila Chaudhary; <strong>Official Members:</strong> Nakul Rai, Vishwas Rai, Anjali Thapa Magar, Sajaya Khatun, Bimal Ghimire and Subash Hamal.</p>
+          <ul class="award-list">
+            <li>Website Launched.</li>
+          </ul>
+          <ul class="budget-list">
+            <li><span class="label">Budget Received</span><span class="amount">₩1,278,000</span></li>
+          </ul>
+          <div class="budget-image-icon" onclick="openBudgetImageA">📷 View Transaction Report 2025</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Budget Modal (for 2023 button) -->
+  <div id="budgetModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeBudgetImage()">&times;</span>
+      <img src="report1.jpg" alt="Budget Report 1"/>
+      <img src="report2.jpg" alt="Budget Report 2"/>
+    </div>
+  </div>
+
+  <!-- Gallery Section (Year-based) -->
+  <section id="gallery">
+    <h2>Gallery</h2>
+
+    <!-- Year selector -->
+    <div class="year-filter" id="yearFilter">
+      <!-- buttons will be injected via JS from 2015..2025 -->
+    </div>
+
+    <!-- Carousel (reused for the selected year) -->
+    <div class="carousel" id="yearCarousel">
+      <div class="carousel-track" id="carouselTrack">
+        <!-- slides injected dynamically -->
+      </div>
+      <button class="carousel-btn prev" type="button" id="prevBtn">‹</button>
+      <button class="carousel-btn next" type="button" id="nextBtn">›</button>
+      <div class="carousel-dots" id="carouselDots"><!-- dots injected dynamically --></div>
+    </div>
+
+    <p class="gallery-empty" id="galleryEmpty">No images for this year yet.</p>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact">
+    <h2>Contact</h2>
+    <p>Email: contact@nesa-ajou.org<br>
+       Location: Ajou University, Suwon, South Korea</p>
+  </section>
+
+  <script>
+    /* Budget modal (2023 button) */
+    function openBudgetImage() {
+      document.getElementById("budgetModal").style.display = "flex";
+    }
+    function closeBudgetImage() {
+      document.getElementById("budgetModal").style.display = "none";
+    }
+    window.onclick = function(event) {
+      const modal = document.getElementById("budgetModal");
+      if (event.target === modal) {
+        modal.style.display = "none";
+      }
+    }
+
+    /* -------- Year-based Gallery -------- */
+
+    // 1) Define your images per year here. Replace with your real files.
+    const galleryData = {
+      2015: ["gallery/2015/2015pic1.jpg", "gallery/2015/2015pic2.jpg"],
+      2016: ["gallery/2016/2016pic1.jpg", "gallery/2016/2016pic2.jpg", "gallery/2016/2016pic3.jpg", "gallery/2016/2016pic4.jpg"],
+      2017: ["gallery/2017/2017pic1.jpg", "gallery/2017/2017pic2.jpg", "gallery/2017/2017pic3.jpg" ],
+      2018: ["gallery/2018/2018pic1.jpg", "gallery/2018/2018pic2.jpg", "gallery/2018/2018pic3.jpg"],
+      2019: ["gallery/2019/2019pic1.jpg", "gallery/2019/2019pic2.jpg", "gallery/2019/2019pic3.jpg", "gallery/2019/2019pic4.jpg", "gallery/2019/2019pic5.jpg", "gallery/2019/2019pic6.jpg"],
+      2020: ["gallery/2020/2020pic1.jpg"],
+      2021: ["gallery/2021/2021pic1.jpg"],
+      2022: ["gallery/2022/pic1.jpg", "gallery/2022/pic2.jpg", "gallery/2022/pic3.jpg" ],
+      2023: ["gallery/2023/2023img1.jpg", "gallery/2023/2023img2.jpg", "gallery/2023/2023img3.jpg", "gallery/2023/2023img4.jpg"],
+      2024: ["gallery/2024/2024pic1.jpg", "gallery/2024/2024pic2.jpg", "gallery/2024/2024pic3.jpg", "gallery/2024/2024pic4.jpg", "gallery/2024/2024pic5.jpg", "gallery/2024/2024pic6.jpg", "gallery/2024/2024pic7.jpg", "gallery/2024/2024pic8.jpg"],
+      2025: ["gallery/2025/2025pic1.jpg", "gallery/2025/2025pic2.jpg", "gallery/2025/2025pic3.jpg"]
+    };
+
+    // 2) Build year buttons
+    const yearFilter = document.getElementById('yearFilter');
+    for (let y = 2015; y <= 2025; y++) {
+      const btn = document.createElement('button');
+      btn.className = 'year-btn';
+      btn.textContent = y;
+      btn.dataset.year = y;
+      yearFilter.appendChild(btn);
+    }
+
+    const carouselEl = document.getElementById('yearCarousel');
+    const trackEl = document.getElementById('carouselTrack');
+    const dotsEl = document.getElementById('carouselDots');
+    const emptyEl = document.getElementById('galleryEmpty');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    let activeYear = null;
+    let slides = [];
+    let dots = [];
+    let index = 0;
+
+    function setActiveYear(y) {
+      activeYear = y;
+      // Set active button state
+      document.querySelectorAll('.year-btn').forEach(b => {
+        b.classList.toggle('active', Number(b.dataset.year) === y);
+      });
+      // Populate carousel
+      const imgs = galleryData[y] || [];
+      trackEl.innerHTML = '';
+      dotsEl.innerHTML = '';
+      slides = [];
+      dots = [];
+      index = 0;
+
+      if (imgs.length === 0) {
+        carouselEl.style.display = 'none';
+        emptyEl.style.display = 'block';
+        return;
+      }
+
+      emptyEl.style.display = 'none';
+      carouselEl.style.display = 'block';
+
+      imgs.forEach((src, i) => {
+        const fig = document.createElement('figure');
+        fig.className = 'carousel-slide' + (i === 0 ? ' active' : '');
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = `Gallery ${y} - Image ${i+1}`;
+        fig.appendChild(img);
+        trackEl.appendChild(fig);
+        slides.push(fig);
+
+        const d = document.createElement('button');
+        d.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+        d.addEventListener('click', () => showSlide(i));
+        dotsEl.appendChild(d);
+        dots.push(d);
+      });
+    }
+
+    function showSlide(i) {
+      if (!slides.length) return;
+      index = (i + slides.length) % slides.length;
+      slides.forEach((s, n) => s.classList.toggle('active', n === index));
+      dots.forEach((d, n) => d.classList.toggle('active', n === index));
+    }
+
+    // Button events
+    prevBtn.addEventListener('click', () => showSlide(index - 1));
+    nextBtn.addEventListener('click', () => showSlide(index + 1));
+
+    // Keyboard navigation (only when gallery is visible)
+    document.addEventListener('keydown', (e) => {
+      if (carouselEl.style.display !== 'block') return;
+      if (e.key === 'ArrowLeft') showSlide(index - 1);
+      if (e.key === 'ArrowRight') showSlide(index + 1);
+    });
+
+    // Touch swipe
+    let startX = null;
+    carouselEl.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, {passive: true});
+    carouselEl.addEventListener('touchend', (e) => {
+      if (startX === null) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 40) dx < 0 ? showSlide(index + 1) : showSlide(index - 1);
+      startX = null;
+    }, {passive: true});
+
+    // Year button clicks
+    yearFilter.addEventListener('click', (e) => {
+      const btn = e.target.closest('.year-btn');
+      if (!btn) return;
+      setActiveYear(Number(btn.dataset.year));
+    });
+
+    // 3) Initialize default year (choose one with images)
+    setActiveYear(2025);
+  </script>
+
+</body>
+<footer class="site-footer" id="credits">
+  Designed & built by Dr. Sunny Thapa Magar & Bibek Lama © 2025</a>.
+</footer>
+</html>
